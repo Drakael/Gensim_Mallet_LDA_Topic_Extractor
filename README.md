@@ -13,6 +13,7 @@ You might have to update smart_open library
 Usage :
 
 gmte = Gensim_Mallet_Topic_Extractor('english')
+
 gmte.extract_topics(data, num_topics) <- data being a list of texts
                                          and num_topics a positive integer
 
@@ -23,10 +24,14 @@ gmte.compute_coherence_values(start=2, limit=40, step=1)
 To get most representative documents for each topic :
 
 gmte.compute_coherence_values(start=2, limit=40, step=1)
+
 df_topic_sents_keywords = gmte.format_topics_sentences()
+
 df_dominant_topic = df_topic_sents_keywords.reset_index()
+
 df_dominant_topic.columns = ['Document_No', 'Dominant_Topic',
                              'Topic_Perc_Contrib', 'Keywords', 'Text']
+
 df_dominant_topic.head(10)
 
 To get topic distribution across documents :
