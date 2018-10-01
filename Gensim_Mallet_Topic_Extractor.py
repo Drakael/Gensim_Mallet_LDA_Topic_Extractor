@@ -114,13 +114,14 @@ class GensimMalletTopicExtractor:
 
     def make_bigrams(self, texts):
         self.bigram = Phrases(self.data_words, min_count=5, threshold=100)
-        self.bigram_mod = Phraser(self.bigram)
-        return [self.bigram_mod[doc] for doc in texts]
+        self.bigram_phraser = Phraser(self.bigram)
+        return [self.bigram_phraser[doc] for doc in texts]
 
     def make_trigrams(self, texts):
-        self.trigram = Phrases(self.bigram[self.data_words], threshold=100)
+        tokens_ = self.bigram_phraser[texts]
+        self.trigram = Phrases(tokens_, threshold=100)
         self.trigram_mod = Phraser(self.trigram)
-        return [self.trigram_mod[self.bigram_mod[doc]] for doc in texts]
+        return [self.trigram_mod[self.bigram_phraser[doc]] for doc in texts]
 
     def lemmatization(self, texts, allowed_postags=None):
         if allowed_postags is None:
@@ -143,8 +144,38 @@ class GensimMalletTopicExtractor:
         self.vis = pyLDAvis.gensim.prepare(self.lda_model, self.corpus, self.id2word)
         print(self.vis)
 
-    def extract_topics(self, data, num_topics, passes=600,
-                       enable_mallet=True, optimize_interval=0):
+    def instanciate_model(self, num_topics, passes, iterations,
+                          enable_mallet, optimize_interval, topic_threshold, show_topics_on_creation=False):
+        if enable_mallet is True:
+            # Download File: http://mallet.cs.umass.edu/dist/mallet-2.0.8.zip
+            os.environ.update({'MALLET_HOME': r'C:/mallet-2.0.8/'})
+            self.mallet_path = 'C:\\mallet-2.0.8\\bin\\mallet'  # update this path
+            self.lda_model = LdaMallet(self.mallet_path,
+                                       corpus=self.corpus,
+                                       num_topics=num_topics,
+                                       id2word=self.id2word,
+                                       iterations=iterations,
+                                       optimize_interval=optimize_interval,
+                                       topic_threshold=topic_threshold)
+            print('Mallet LDA model built\n')
+            if show_topics_on_creation is True:
+                pprint(self.lda_model.show_topics(formatted=False))
+        else:
+            self.lda_model = LdaMulticore(corpus=self.corpus,
+                                          id2word=self.id2word,
+                                          num_topics=num_topics,
+                                          random_state=100,
+                                          chunksize=500,
+                                          passes=passes,
+                                          iterations=iterations,
+                                          per_word_topics=True)
+            print('LDA_MultiCore model built\n')
+            if show_topics_on_creation is True:
+                pprint(self.lda_model.print_topics())
+
+    def extract_topics(self, data, num_topics, passes=10, iterations=500,
+                       enable_mallet=True, optimize_interval=0,
+                       topic_threshold=0.0):
         self.data = data
         print('\nEXTRACTING ' + str(num_topics) + ' TOPICS')
         self.data_words = list(self.sent_to_words(self.data, True))
@@ -156,7 +187,7 @@ class GensimMalletTopicExtractor:
         self.data_words_bigrams = self.make_bigrams(self.data_words_nostops)
         # Form Trigrams
         print('Looking for trigrams')
-        self.data_words_trigrams = self.make_trigrams(self.data_words_bigrams)
+        self.data_words_trigrams = self.make_trigrams(self.data_words_nostops)
         # Initialize spacy 'en' model, keeping only tagger component (for efficiency)
         # python3 -m spacy download en
         print('Loading Spacy with ' + self.language + ' dictionary')
@@ -176,30 +207,9 @@ class GensimMalletTopicExtractor:
         self.corpus = [self.id2word.doc2bow(text) for text in self.texts]
         # Build LDA model
         print('\nEnable_mallet is', enable_mallet, '\n')
-        if enable_mallet is True:
-            # Download File: http://mallet.cs.umass.edu/dist/mallet-2.0.8.zip
-            os.environ.update({'MALLET_HOME': r'C:/mallet-2.0.8/'})
-            self.mallet_path = 'C:\\mallet-2.0.8\\bin\\mallet'  # update this path
-            self.lda_model = LdaMallet(self.mallet_path,
-                                       corpus=self.corpus,
-                                       num_topics=num_topics,
-                                       id2word=self.id2word,
-                                       iterations=passes,
-                                       optimize_interval=optimize_interval)
-            print('Mallet LDA model built\n')
-            pprint(self.lda_model.show_topics(formatted=False))
-        else:
-            self.lda_model = LdaMulticore(corpus=self.corpus,
-                                          id2word=self.id2word,
-                                          num_topics=num_topics,
-                                          random_state=100,
-                                          # update_every=1,
-                                          chunksize=100,
-                                          passes=passes,
-                                          alpha='auto',
-                                          per_word_topics=True)
-            print('LDA model built\n')
-            pprint(self.lda_model.print_topics())
+        self.instanciate_model(num_topics, passes, iterations,
+                               enable_mallet, optimize_interval, topic_threshold,
+                               show_topics_on_creation=True)
         # print(self.lda_model[self.corpus])
         # Compute Perplexity
         # a measure of how good the model is. lower the better.
@@ -222,8 +232,9 @@ class GensimMalletTopicExtractor:
     def view_optimal_topics(self, num_words=20):
         pprint(self.optimal_model.print_topics(num_words=num_words))
 
-    def compute_coherence_values(self, limit, start=2, step=3, passes=600,
-                                 enable_mallet=True, optimize_interval=0):
+    def compute_coherence_values(self, limit, start=2, step=3, passes=10,
+                                 iterations=500, enable_mallet=True,
+                                 optimize_interval=0, topic_threshold=0.0):
         """
         Compute c_v coherence for various number of topics
 
@@ -238,25 +249,11 @@ class GensimMalletTopicExtractor:
         """
         for num_topics in range(start, limit, step):
             print('\n' + '*'*10 + ' COMPUTING COHERENCE FOR ' + str(num_topics) + ' TOPICS ' + '*'*10)
-            if enable_mallet is True:
-                model = LdaMallet(self.mallet_path,
-                                  corpus=self.corpus,
-                                  num_topics=num_topics,
-                                  id2word=self.id2word,
-                                  iterations=passes,
-                                  optimize_interval=optimize_interval)
-            else:
-                model = LdaMulticore(corpus=self.corpus,
-                                     id2word=self.id2word,
-                                     num_topics=num_topics,
-                                     random_state=100,
-                                     # update_every=1,
-                                     chunksize=100,
-                                     passes=passes,
-                                     alpha='auto',
-                                     per_word_topics=True)
-            self.model_list.append(model)
-            coherence_model = CoherenceModel(model=model,
+            self.instanciate_model(num_topics, passes, iterations,
+                                   enable_mallet, optimize_interval, topic_threshold,
+                                   show_topics_on_creation=False)
+            self.model_list.append(self.lda_model)
+            coherence_model = CoherenceModel(model=self.lda_model,
                                              texts=self.data_lemmatized,
                                              dictionary=self.id2word,
                                              coherence='c_v')

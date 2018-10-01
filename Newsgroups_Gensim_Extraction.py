@@ -29,12 +29,19 @@ if __name__ == '__main__':
 
     pprint(data[:1])
 
-    gmte.extract_topics(data, 21, passes=600, optimize_interval=10)
+    gmte.extract_topics(data, 21,
+                        # passes=10,
+                        iterations=500,
+                        optimize_interval=10, topic_threshold=0.0,
+                        enable_mallet=True)
 
     # Can take a long time to run.
-    gmte.compute_coherence_values(start=19, limit=33, step=1,
-                                  passes=600,
-                                  optimize_interval=10)
+    gmte.compute_coherence_values(start=18, limit=33, step=1,
+                                  # passes=10,
+                                  iterations=500,
+                                  optimize_interval=10,
+                                  topic_threshold=0.0,
+                                  enable_mallet=True)
 
     df_topic_sents_keywords = gmte.format_topics_sentences()
 
