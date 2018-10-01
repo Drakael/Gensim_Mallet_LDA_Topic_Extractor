@@ -79,9 +79,9 @@ class GensimMalletTopicExtractor:
             self.stop_words.extend(stopwords_extent)
         self.df_topic_sents_keywords = None
         self.bigram = None
-        self.bigram_mod = None
+        self.bigram_phraser = None
         self.trigram = None
-        self.trigram_mod = None
+        self.trigram_phraser = None
         self.vis = None
         self.data = None
         self.data_words = None
@@ -120,8 +120,8 @@ class GensimMalletTopicExtractor:
     def make_trigrams(self, texts):
         tokens_ = self.bigram_phraser[texts]
         self.trigram = Phrases(tokens_, threshold=100)
-        self.trigram_mod = Phraser(self.trigram)
-        return [self.trigram_mod[self.bigram_phraser[doc]] for doc in texts]
+        self.trigram_phraser = Phraser(self.trigram)
+        return [self.trigram_phraser[self.bigram_phraser[doc]] for doc in texts]
 
     def lemmatization(self, texts, allowed_postags=None):
         if allowed_postags is None:
