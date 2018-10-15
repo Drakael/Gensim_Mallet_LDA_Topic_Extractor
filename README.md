@@ -4,6 +4,7 @@ Python class implementation of Gensim/Mallet topic extration with Latent Dirichl
 
 Installation :
 
+Install Java, Python/NLTK/Spacy/Pandas/PyLDAVis
 
 Run in python console : import nltk; nltk.download('stopwords')
 
@@ -11,11 +12,11 @@ Run in terminal or command prompt : python3 -m spacy download en
 
 Download Mallet from http://mallet.cs.umass.edu/dist/mallet-2.0.8.zip
 
-Unzip preferably to C:/Mallet/
+Unzip preferably to C:/mallet-2.0.8/
 
-Add an environment variable MALLET_HOME with the path to Mallet directory
+Add an environment variable MALLET_HOME with the path to Mallet directory pointing to "C:/mallet-2.0.8/"
 
-You might have to update smart_open library
+You might have to update smart_open library or downgrade it to some older version
 
 
 Usage :
