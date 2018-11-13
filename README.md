@@ -14,6 +14,8 @@ Download Mallet from http://mallet.cs.umass.edu/dist/mallet-2.0.8.zip
 
 Unzip preferably to C:/mallet-2.0.8/
 
+Add an environment variable JAVAHOME with the path to Java bin directory pointing to something like "C:\Program Files (x86)\Java\jre1.8.0_191\bin"
+
 Add an environment variable MALLET_HOME with the path to Mallet directory pointing to "C:/mallet-2.0.8/"
 
 You might have to update smart_open library or downgrade it to some older version
