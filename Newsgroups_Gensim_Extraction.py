@@ -40,9 +40,9 @@ if __name__ == '__main__':
     pprint(data[5])
     np.random.seed(1)
     np.random.shuffle(data)
-    gmte.extract_topics(data[:150], 20,
+    gmte.extract_topics(data, 20,
                         # passes=10,
-                        iterations=500,
+                        iterations=1000,
                         optimize_interval=10, topic_threshold=0.0,
                         enable_mallet=True)
 
@@ -70,9 +70,9 @@ if __name__ == '__main__':
     print(gmte.data_words_nostops[0])
     # sys.exit('die')
     # Can take a long time to run.
-    gmte.compute_coherence_values(start=2, limit=55, step=5,
+    gmte.compute_coherence_values(start=2, limit=55, step=1,
                                   # passes=10,
-                                  iterations=500,
+                                  iterations=1000,
                                   optimize_interval=10,
                                   topic_threshold=0.0,
                                   enable_mallet=True)
